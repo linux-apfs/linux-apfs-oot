@@ -25,11 +25,22 @@ static int apfs_readpage(struct file *file, struct page *page)
 	return mpage_readpage(page, apfs_get_block);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) /* Misses mpage_readpages() */
+
+static void apfs_readahead(struct readahead_control *rac)
+{
+	mpage_readahead(rac, apfs_get_block);
+}
+
+#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) */
+
 static int apfs_readpages(struct file *file, struct address_space *mapping,
 			  struct list_head *pages, unsigned int nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, apfs_get_block);
 }
+
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) */
 
 static sector_t apfs_bmap(struct address_space *mapping, sector_t block)
 {
@@ -38,7 +49,11 @@ static sector_t apfs_bmap(struct address_space *mapping, sector_t block)
 
 static const struct address_space_operations apfs_aops = {
 	.readpage	= apfs_readpage,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+	.readahead	= apfs_readahead,
+#else
 	.readpages	= apfs_readpages,
+#endif
 	.bmap		= apfs_bmap,
 };
 
