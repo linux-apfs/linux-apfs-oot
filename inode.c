@@ -301,8 +301,14 @@ int apfs_getattr(struct vfsmount *mnt, struct dentry *dentry,
 
 #else /* LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0) */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+int apfs_getattr(struct user_namespace *mnt_uerns, const struct path *path,
+		 struct kstat *stat,u32 request_mask, unsigned int query_flags)
+#else
 int apfs_getattr(const struct path *path, struct kstat *stat,
 		 u32 request_mask, unsigned int query_flags)
+#endif
+
 {
 	struct inode *inode = d_inode(path->dentry);
 	struct apfs_inode_info *ai = APFS_I(inode);
@@ -314,8 +320,11 @@ int apfs_getattr(const struct path *path, struct kstat *stat,
 		stat->attributes |= STATX_ATTR_COMPRESSED;
 
 	stat->attributes_mask |= STATX_ATTR_COMPRESSED;
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+	generic_fillattr(&init_user_ns, inode, stat);
+#else
 	generic_fillattr(inode, stat);
+#endif
 #if BITS_PER_LONG == 32
 	stat->ino = ai->i_ino;
 #endif /* BITS_PER_LONG == 32 */

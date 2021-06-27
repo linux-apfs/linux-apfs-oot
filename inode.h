@@ -130,9 +130,15 @@ extern struct inode *apfs_iget(struct super_block *sb, u64 cnid);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0) /* No statx yet... */
 extern int apfs_getattr(struct vfsmount *mnt, struct dentry *dentry,
 			struct kstat *stat);
+
+#else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+extern int apfs_getattr(struct user_namespace *mnt_uerns, const struct path *path,
+		 struct kstat *stat,u32 request_mask, unsigned int query_flags);
 #else
 extern int apfs_getattr(const struct path *path, struct kstat *stat,
-			u32 request_mask, unsigned int query_flags);
+		 u32 request_mask, unsigned int query_flags);
+#endif
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0) */
 
 #endif	/* _APFS_INODE_H */
